@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blackjack Game</title>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f2f6fa;
+            color: #2c2c2c;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #2c2c2c;
+        }
+        button {
+            padding: 10px 20px;
+           16px;
+            background-color: #354f52;
+            color: #f1faee;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        button:hover {
+            background-color: #ffb703;
+        }
+        .message {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+        .cards {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .card {
+            width: 100px;
+            height: 150px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            margin: 0 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            background-color: #f1faee;
+        }
+        .red {
+            color: red;
+        }
+        .label {
+            font-size: 20px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Blackjack Game</h1>
+        <button onclick="startGame()">Start Game</button>
+        <button onclick="hitMe()">Hit Me</button>
+        <button onclick="stay()">Stay</button>
+        <div class="label">Player's Cards:</div>
+        <div class="cards" id="playerCards"></div>
+        <div class="label">Dealer's Cards:</div>
+        <div class="cards" id="dealerCards"></div>
+        <p class="message" id="message"></p>
+    </div>
+
+    <script>
+        let deck = [];
+        let playerHand = [];
+        let dealerHand = [];
+        let gameOver = false;
+
+        function createDeck() {
+            const suits = ['♠', '♥', '♦', '♣'];
+            const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+            deck = [];
+            for (let suit of suits) {
+                for (let value of values) {
+                    deck.push({ suit, value });
+                }
+            }
+            deck = shuffle(deck);
+        }
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function startGame() {
+            createDeck();
+            playerHand = [deck.pop(), deck.pop()];
+            dealerHand = [deck.pop(), deck.pop()];
+            gameOver = false;
+            displayCards();
+            checkWinner();
+        }
+
+        function hitMe() {
+            if (!gameOver) {
+                playerHand.push(deck.pop());
+                displayCards();
+                checkWinner();
+            }
+        }
+
+        function stay() {
+            if (!gameOver) {
+                while (getHandValue(dealerHand) < 17) {
+                    dealerHand.push(deck.pop());
+                }
+                gameOver = true;
+                displayCards();
+                checkWinner();
+            }
+        }
+
+        function displayCards() {
+            const playerCardsDiv = document.getElementById('playerCards');
+            const dealerCardsDiv = document.getElementById('dealerCards');
+            playerCardsDiv.innerHTML = '';
+            dealerCardsDiv.innerHTML = '';
+            for (let card of playerHand) {
+                playerCardsDiv.innerHTML += `<div class="card ${card.suit === '♥' || card.suit === '♦' ? 'red' : ''}">${card.value}${card.suit}</div>`;
+            }
+            for (let card of dealerHand) {
+                dealerCardsDiv.innerHTML += `<div class="card ${card.suit === '♥' || card.suit === '♦' ? 'red' : ''}">${card.value}${card.suit}</div>`;
+            }
+        }
+
+        function getCardValue(card) {
+            if (['J', 'Q', 'K'].includes(card.value)) {
+                return 10;
+            } else if (card.value === 'A') {
+                return 11;
+            } else {
+                return parseInt(card.value);
+            }
+        }
+
+        function getHandValue(hand) {
+            let value = 0;
+            let aceCount = 0;
+            for (let card of hand) {
+                value += getCardValue(card);
+                if (card.value === 'A') {
+                    aceCount++;
+                }
+            }
+            while (value > 21 && aceCount > 0) {
+                value -= 10;
+                aceCount--;
+            }
+            return value;
+        }
+
+        function checkWinner() {
+            const playerValue = getHandValue(playerHand);
+            const dealerValue = getHandValue(dealerHand);
+            const message = document.getElementById('message');
+            if (playerValue > 21) {
+                message.textContent = 'Player busts! Dealer wins.';
+                message.style.color = 'red';
+                gameOver = true;
+            } else if (dealerValue > 21) {
+                message.textContent = 'Dealer busts! Player wins.';
+                message.style.color = 'green';
+                gameOver = true;
+            } else if (gameOver) {
+                if (playerValue === dealerValue) {
+                    message.textContent = 'It\'s a tie!';
+                    message.style.color = 'orange';
+                } else if (playerValue > dealerValue) {
+                    message.textContent = 'Player wins!';
+                    message.style.color = 'green';
+                } else {
+                    message.textContent = 'Dealer wins!';
+                    message.style.color = 'red';
+                }
+            }
+        }
+    </script>
+</body>
+</html>
